@@ -1,0 +1,204 @@
+✅ Dzień 1 – Komponenty serwerowe i pobieranie danych
+Przeczytaj oficjalną dokumentację:
+
+Data Fetching w App Router
+
+Server Components
+
+Stwórz plik app/page.tsx i w nim komponent serwerowy, który pobiera dane z zewnętrznego API (np. JSONPlaceholder) bezpośrednio w treści.
+
+tsx
+// app/page.tsx
+import { Post } from '@/types';
+
+export default async function Home() {
+  const res = await fetch('https://jsonplaceholder.typicode.com/posts');
+  const posts: Post[] = await res.json();
+
+  return (
+    <ul>
+      {posts.map(post => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+Utwórz plik types/index.ts (w katalogu głównym) z interfejsem Post.
+
+Zaobserwuj, że strona jest domyślnie statyczna (SSG) – po npm run build zobaczysz, że została wygenerowana jako plik HTML.
+
+Zmodyfikuj fetch, aby wymusić dynamiczne renderowanie (SSR) przez dodanie { cache: 'no-store' }:
+
+ts
+const res = await fetch('https://jsonplaceholder.typicode.com/posts', { cache: 'no-store' });
+Odpowiedz sobie: czym różni się to podejście od getStaticProps i getServerSideProps?
+
+✅ Dzień 2 – Dynamiczne ścieżki i generateStaticParams
+Przeczytaj: generateStaticParams
+
+Stwórz strukturę dla pojedynczego posta:
+app/posts/[id]/page.tsx
+
+W tym pliku zaimplementuj generateStaticParams, aby wygenerować ścieżki dla pierwszych 5 postów.
+
+tsx
+// app/posts/[id]/page.tsx
+import { Post } from '@/types';
+
+export async function generateStaticParams() {
+  const posts = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5')
+    .then(res => res.json() as Promise<Post[]>);
+  
+  return posts.map(post => ({
+    id: post.id.toString(),
+  }));
+}
+
+export default async function PostPage({ params }: { params: { id: string } }) {
+  const post = await fetch(`https://jsonplaceholder.typicode.com/posts/${params.id}`)
+    .then(res => res.json() as Promise<Post>);
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <p>{post.body}</p>
+    </article>
+  );
+}
+Sprawdź, co się dzieje, gdy wejdziesz na /posts/999 (domyślnie Next.js wygeneruje stronę dynamicznie, bo generateStaticParams podało tylko 5).
+
+Eksperymentuj z opcjami dynamicParams (możesz ustawić export const dynamicParams = false w pliku, aby zablokować nieznane ścieżki).
+
+✅ Dzień 3 – Route Handlers (API Routes w App Router)
+Przeczytaj: Route Handlers
+
+Stwórz plik app/api/posts/route.ts – to będzie endpoint API.
+
+ts
+// app/api/posts/route.ts
+import { NextResponse } from 'next/server';
+import { Post } from '@/types';
+
+export async function GET() {
+  const res = await fetch('https://jsonplaceholder.typicode.com/posts');
+  const posts: Post[] = await res.json();
+  return NextResponse.json(posts);
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  // Tutaj zapis do bazy (np. przez Prisma)
+  return NextResponse.json({ message: 'Post created', post: body }, { status: 201 });
+}
+Połącz z Prismą – skonfiguruj Prismę (jeśli jeszcze nie) i w POST zapisz dane do bazy.
+
+Zmodyfikuj stronę app/page.tsx, aby pobierała dane z Twojego własnego API (fetch('/api/posts')) zamiast z zewnętrznego.
+
+Dodaj formularz do dodawania posta (może to być komponent kliencki) – użyj fetch do wysłania danych na POST /api/posts.
+
+✅ Dzień 4 – Komponenty klienckie i useRouter
+Przeczytaj: useRouter w App Router
+
+Stwórz komponent kliencki do nawigacji – np. przycisk "Wróć do listy" na stronie posta.
+
+tsx
+// app/posts/[id]/page.tsx (dodaj na dole)
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+// ... reszta kodu
+
+// To musi być osobny komponent kliencki (lub dodaj 'use client' na górze pliku)
+'use client';
+function BackButton() {
+  const router = useRouter();
+  return <button onClick={() => router.push('/')}>Wróć</button>;
+}
+Stwórz stronę z danymi pobieranymi po stronie klienta (np. panel użytkownika, który wymaga interakcji). Użyj useEffect + fetch w komponencie klienckim.
+
+Porównaj CSR z SSR – zajrzyj do źródła strony i zobacz, co jest renderowane na serwerze.
+
+✅ Dzień 5 – Uwierzytelnianie (NextAuth.js z App Router)
+Przeczytaj: NextAuth.js w App Router
+
+Zainstaluj NextAuth:
+
+bash
+npm install next-auth
+Stwórz plik app/api/auth/[...nextauth]/route.ts – to będzie route handler dla autoryzacji.
+
+Skonfiguruj proste logowanie (np. przez GitHub/Google) zgodnie z dokumentacją.
+
+Zabezpiecz stronę /profile – stwórz app/profile/page.tsx i sprawdź sesję:
+
+tsx
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // lub osobny plik
+
+export default async function Profile() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect('/api/auth/signin');
+  }
+  return <div>Witaj, {session.user?.email}</div>;
+}
+Dodaj przycisk logowania/wylogowania (komponent kliencki z useSession i signIn/signOut z next-auth/react).
+
+W Route Handlerze POST /api/posts sprawdź sesję – tylko zalogowani mogą dodawać posty.
+
+✅ Dzień 6 – Middleware w App Router
+Przeczytaj: Middleware w Next.js
+
+Stwórz plik middleware.ts w katalogu głównym projektu.
+
+Zaimplementuj middleware, który:
+
+Sprawdza, czy użytkownik jest zalogowany (np. na podstawie tokena w ciasteczkach).
+
+Przekierowuje niezalogowanych próbujących wejść na /profile na stronę logowania.
+
+(Opcjonalnie) Dodaj logowanie IP lub geolokalizację.
+
+ts
+// middleware.ts
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+
+export default withAuth(
+  function middleware(req) {
+    // Możesz dodać własną logikę
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+);
+
+export const config = {
+  matcher: ['/profile', '/api/posts/:path*'], // chronione ścieżki
+};
+Przetestuj dostęp do /profile i /api/posts bez logowania.
+
+✅ Dzień 7 – Podsumowanie i projekt końcowy
+Zbuduj małą, kompletną aplikację łączącą wszystko:
+
+Strona publiczna: lista postów (pobierana w komponencie serwerowym, statycznie).
+
+Strona pojedynczego posta (generowana statycznie przez generateStaticParams).
+
+Formularz dodawania posta (tylko dla zalogowanych) – zapis do bazy przez Route Handler POST /api/posts.
+
+Logowanie przez NextAuth.
+
+Middleware chroniący /add-post i API.
+
+Strona profilu z danymi użytkownika.
+
+Wdróż na Vercel (to już umiesz).
+
+Przejrzyj kod i odpowiedz sobie: Czy rozumiem różnice między komponentami serwerowymi a klienckimi? Czy potrafię zdecydować, kiedy dane mają być statyczne, a kiedy dynamiczne?
+
+🔥 Po tym tygodniu będziesz umiał (w najnowszym Next.js):
