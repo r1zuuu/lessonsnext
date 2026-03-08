@@ -200,5 +200,3 @@ Strona profilu z danymi użytkownika.
 Wdróż na Vercel (to już umiesz).
 
 Przejrzyj kod i odpowiedz sobie: Czy rozumiem różnice między komponentami serwerowymi a klienckimi? Czy potrafię zdecydować, kiedy dane mają być statyczne, a kiedy dynamiczne?
-
-🔥 Po tym tygodniu będziesz umiał (w najnowszym Next.js):
