@@ -1,202 +1,186 @@
-✅ Dzień 1 – Komponenty serwerowe i pobieranie danych
-Przeczytaj oficjalną dokumentację:
+Świetnie, że przerobiłeś pierwsze cztery dni! Teraz czas na **rozbudowę backendu** – więcej route'ów, bardziej złożona logika i dobre praktyki, które przybliżą Cię do poziomu **junior/mid**. Poniżej znajdziesz rozszerzony plan na **kolejne dwa tygodnie** (dni 5–14). Każdy dzień to konkretne zadania, które stopniowo podnoszą poprzeczkę.
 
-Data Fetching w App Router
+---
 
-Server Components
+## 📅 **Tydzień 2 – Zaawansowane API, autoryzacja i bazy danych**
 
-Stwórz plik app/page.tsx i w nim komponent serwerowy, który pobiera dane z zewnętrznego API (np. JSONPlaceholder) bezpośrednio w treści.
+### ✅ Dzień 5 – Uwierzytelnianie (NextAuth) i ochrona API
 
-tsx
-// app/page.tsx
-import { Post } from '@/types';
+**Cel:** Dodać logowanie i zabezpieczyć wybrane endpointy.
 
-export default async function Home() {
-  const res = await fetch('https://jsonplaceholder.typicode.com/posts');
-  const posts: Post[] = await res.json();
-
-  return (
-    <ul>
-      {posts.map(post => (
-        <li key={post.id}>{post.title}</li>
-      ))}
-    </ul>
-  );
-}
-Utwórz plik types/index.ts (w katalogu głównym) z interfejsem Post.
-
-Zaobserwuj, że strona jest domyślnie statyczna (SSG) – po npm run build zobaczysz, że została wygenerowana jako plik HTML.
-
-Zmodyfikuj fetch, aby wymusić dynamiczne renderowanie (SSR) przez dodanie { cache: 'no-store' }:
-
-ts
-const res = await fetch('https://jsonplaceholder.typicode.com/posts', { cache: 'no-store' });
-Odpowiedz sobie: czym różni się to podejście od getStaticProps i getServerSideProps?
-
-✅ Dzień 2 – Dynamiczne ścieżki i generateStaticParams
-Przeczytaj: generateStaticParams
-
-Stwórz strukturę dla pojedynczego posta:
-app/posts/[id]/page.tsx
-
-W tym pliku zaimplementuj generateStaticParams, aby wygenerować ścieżki dla pierwszych 5 postów.
-
-tsx
-// app/posts/[id]/page.tsx
-import { Post } from '@/types';
-
-export async function generateStaticParams() {
-  const posts = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5')
-    .then(res => res.json() as Promise<Post[]>);
-  
-  return posts.map(post => ({
-    id: post.id.toString(),
-  }));
-}
-
-export default async function PostPage({ params }: { params: { id: string } }) {
-  const post = await fetch(`https://jsonplaceholder.typicode.com/posts/${params.id}`)
-    .then(res => res.json() as Promise<Post>);
-
-  return (
-    <article>
-      <h1>{post.title}</h1>
-      <p>{post.body}</p>
-    </article>
-  );
-}
-Sprawdź, co się dzieje, gdy wejdziesz na /posts/999 (domyślnie Next.js wygeneruje stronę dynamicznie, bo generateStaticParams podało tylko 5).
-
-Eksperymentuj z opcjami dynamicParams (możesz ustawić export const dynamicParams = false w pliku, aby zablokować nieznane ścieżki).
-
-✅ Dzień 3 – Route Handlers (API Routes w App Router)
-Przeczytaj: Route Handlers
-
-Stwórz plik app/api/posts/route.ts – to będzie endpoint API.
-
-ts
-// app/api/posts/route.ts
-import { NextResponse } from 'next/server';
-import { Post } from '@/types';
-
-export async function GET() {
-  const res = await fetch('https://jsonplaceholder.typicode.com/posts');
-  const posts: Post[] = await res.json();
-  return NextResponse.json(posts);
-}
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  // Tutaj zapis do bazy (np. przez Prisma)
-  return NextResponse.json({ message: 'Post created', post: body }, { status: 201 });
-}
-Połącz z Prismą – skonfiguruj Prismę (jeśli jeszcze nie) i w POST zapisz dane do bazy.
-
-Zmodyfikuj stronę app/page.tsx, aby pobierała dane z Twojego własnego API (fetch('/api/posts')) zamiast z zewnętrznego.
-
-Dodaj formularz do dodawania posta (może to być komponent kliencki) – użyj fetch do wysłania danych na POST /api/posts.
-
-✅ Dzień 4 – Komponenty klienckie i useRouter
-Przeczytaj: useRouter w App Router
-
-Stwórz komponent kliencki do nawigacji – np. przycisk "Wróć do listy" na stronie posta.
-
-tsx
-// app/posts/[id]/page.tsx (dodaj na dole)
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
-// ... reszta kodu
-
-// To musi być osobny komponent kliencki (lub dodaj 'use client' na górze pliku)
-'use client';
-function BackButton() {
-  const router = useRouter();
-  return <button onClick={() => router.push('/')}>Wróć</button>;
-}
-Stwórz stronę z danymi pobieranymi po stronie klienta (np. panel użytkownika, który wymaga interakcji). Użyj useEffect + fetch w komponencie klienckim.
-
-Porównaj CSR z SSR – zajrzyj do źródła strony i zobacz, co jest renderowane na serwerze.
-
-✅ Dzień 5 – Uwierzytelnianie (NextAuth.js z App Router)
-Przeczytaj: NextAuth.js w App Router
-
-Zainstaluj NextAuth:
-
-bash
-npm install next-auth
-Stwórz plik app/api/auth/[...nextauth]/route.ts – to będzie route handler dla autoryzacji.
-
-Skonfiguruj proste logowanie (np. przez GitHub/Google) zgodnie z dokumentacją.
-
-Zabezpiecz stronę /profile – stwórz app/profile/page.tsx i sprawdź sesję:
-
-tsx
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // lub osobny plik
-
-export default async function Profile() {
+- [ ] **Przeczytaj dokumentację NextAuth dla App Router:**  
+  [NextAuth.js](https://next-auth.js.org/configuration/nextjs#in-app-router)
+- [ ] **Zainstaluj NextAuth i skonfiguruj podstawowe logowanie** (np. przez GitHub/Google):
+  ```bash
+  npm install next-auth
+  ```
+- [ ] **Utwórz plik `app/api/auth/[...nextauth]/route.ts`** z konfiguracją (możesz skorzystać z przykładowego kodu z dokumentacji).
+- [ ] **Dodaj provider logowania** (np. GitHub) – musisz utworzyć aplikację OAuth na GitHubie i dodać dane do `.env`.
+- [ ] **Stwórz prosty komponent logowania** (przycisk "Zaloguj") – użyj `signIn` z `next-auth/react`.
+- [ ] **Zabezpiecz stronę `/profile`** – sprawdź sesję po stronie serwera (`getServerSession`) i przekieruj niezalogowanych.
+- [ ] **Zabezpiecz route handler `POST /api/posts`** – dodaj sprawdzenie sesji, aby tylko zalogowani mogli dodawać posty.
+  ```ts
   const session = await getServerSession(authOptions);
   if (!session) {
-    redirect('/api/auth/signin');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  return <div>Witaj, {session.user?.email}</div>;
-}
-Dodaj przycisk logowania/wylogowania (komponent kliencki z useSession i signIn/signOut z next-auth/react).
+  ```
+- [ ] **Przetestuj:** Spróbuj dodać post bez logowania – powinieneś dostać błąd 401.
 
-W Route Handlerze POST /api/posts sprawdź sesję – tylko zalogowani mogą dodawać posty.
+### ✅ Dzień 6 – Autoryzacja i role użytkowników
 
-✅ Dzień 6 – Middleware w App Router
-Przeczytaj: Middleware w Next.js
+**Cel:** Rozróżnić zwykłych użytkowników od adminów.
 
-Stwórz plik middleware.ts w katalogu głównym projektu.
-
-Zaimplementuj middleware, który:
-
-Sprawdza, czy użytkownik jest zalogowany (np. na podstawie tokena w ciasteczkach).
-
-Przekierowuje niezalogowanych próbujących wejść na /profile na stronę logowania.
-
-(Opcjonalnie) Dodaj logowanie IP lub geolokalizację.
-
-ts
-// middleware.ts
-import { withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
-
-export default withAuth(
-  function middleware(req) {
-    // Możesz dodać własną logikę
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+- [ ] **Rozszerz model Prisma** o pole `role` w modelu `User`:
+  ```prisma
+  model User {
+    id        Int    @id @default(autoincrement())
+    email     String @unique
+    name      String?
+    role      String @default("user") // "user" lub "admin"
+    posts     Post[]
   }
-);
+  ```
+- [ ] **Wykonaj migrację** (`npx prisma migrate dev`).
+- [ ] **Stwórz endpoint `GET /api/users`** – dostępny tylko dla admina, zwracający listę użytkowników.
+- [ ] **W route handlerze sprawdź rolę**:
+  ```ts
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  ```
+- [ ] **Dodaj możliwość promowania użytkownika na admina** (np. endpoint `POST /api/users/make-admin` – tylko dla istniejącego admina).
+- [ ] **Przetestuj** różne scenariusze: logowanie jako user, jako admin.
 
-export const config = {
-  matcher: ['/profile', '/api/posts/:path*'], // chronione ścieżki
-};
-Przetestuj dostęp do /profile i /api/posts bez logowania.
+### ✅ Dzień 7 – Relacje w bazie danych (Prisma)
 
-✅ Dzień 7 – Podsumowanie i projekt końcowy
-Zbuduj małą, kompletną aplikację łączącą wszystko:
+**Cel:** Połączyć posty z użytkownikami (każdy post ma autora).
 
-Strona publiczna: lista postów (pobierana w komponencie serwerowym, statycznie).
+- [ ] **Zaktualizuj model `Post` w Prisma**:
+  ```prisma
+  model Post {
+    id        Int    @id @default(autoincrement())
+    title     String
+    body      String
+    userId    Int
+    user      User   @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+  }
+  ```
+- [ ] **Wykonaj migrację**.
+- [ ] **Zmodyfikuj `POST /api/posts`** – podczas tworzenia posta przypisz go do zalogowanego użytkownika (pobierz `userId` z sesji).
+- [ ] **Zmodyfikuj `GET /api/posts`** – dołącz dane autora (`include: { user: true }`).
+- [ ] **Dostosuj typy TypeScript** (możesz użyć wygenerowanych typów z Prismy).
+- [ ] **Na stronie głównej wyświetl również autora posta** (np. `Autor: {post.user.email}`).
 
-Strona pojedynczego posta (generowana statycznie przez generateStaticParams).
+### ✅ Dzień 8 – Zaawansowane operacje na API (PUT, DELETE)
 
-Formularz dodawania posta (tylko dla zalogowanych) – zapis do bazy przez Route Handler POST /api/posts.
+**Cel:** Pełny CRUD dla postów.
 
-Logowanie przez NextAuth.
+- [ ] **Dodaj route handler `PUT /api/posts/[id]`** – aktualizacja posta (tylko dla autora lub admina).
+  - Sprawdź, czy post istnieje i czy użytkownik ma prawo go edytować.
+  - Użyj `prisma.post.update`.
+- [ ] **Dodaj route handler `DELETE /api/posts/[id]`** – usuwanie posta (tylko autor lub admin).
+- [ ] **Dodaj przyciski edycji/usuwania na stronie `/profile`** (dla postów zalogowanego użytkownika).
+- [ ] **Zaimplementuj formularz edycji** (może być na osobnej stronie lub w modalu).
+- [ ] **Przetestuj** każdą operację.
 
-Middleware chroniący /add-post i API.
+### ✅ Dzień 9 – Walidacja danych (Zod)
 
-Strona profilu z danymi użytkownika.
+**Cel:** Bezpieczna walidacja danych wejściowych w API.
 
-Wdróż na Vercel (to już umiesz).
+- [ ] **Zainstaluj Zod**: `npm install zod`
+- [ ] **Stwórz schematy walidacji** dla `POST` i `PUT` (np. `title` min 3 znaki, `body` min 10).
+  ```ts
+  import { z } from 'zod';
+  const postSchema = z.object({
+    title: z.string().min(3),
+    body: z.string().min(10),
+  });
+  ```
+- [ ] **W route handlerach użyj `postSchema.parse(body)`** – zwróci błąd, jeśli dane są niepoprawne.
+- [ ] **Obsłuż błędy walidacji** – zwróć odpowiedź z kodem 400 i listą błędów.
+- [ ] **Dodaj walidację dla query parameters** (np. przy filtrowaniu).
 
-Przejrzyj kod i odpowiedz sobie: Czy rozumiem różnice między komponentami serwerowymi a klienckimi? Czy potrafię zdecydować, kiedy dane mają być statyczne, a kiedy dynamiczne?
+---
+
+## 📅 **Tydzień 3 – Zaawansowana logika, filtrowanie, paginacja i webhooki**
+
+### ✅ Dzień 10 – Filtrowanie, sortowanie i paginacja
+
+**Cel:** Umożliwić pobieranie postów z parametrami.
+
+- [ ] **W `GET /api/posts` odczytaj query parameters**:
+  - `page` (numer strony)
+  - `limit` (ilość na stronę)
+  - `sortBy` (np. 'createdAt')
+  - `order` ('asc'/'desc')
+  - `authorId` (filtrowanie po autorze)
+- [ ] **Zaimplementuj paginację** z użyciem `skip` i `take`.
+- [ ] **Dodaj sortowanie** (przez `orderBy`).
+- [ ] **Zwróć dodatkowe informacje** – całkowita liczba postów, liczba stron.
+- [ ] **Przetestuj**: `/api/posts?page=2&limit=5&sortBy=createdAt&order=desc`
+
+### ✅ Dzień 11 – Zaawansowane relacje i zliczanie
+
+**Cel:** Dodać statystyki i agregacje.
+
+- [ ] **Stwórz endpoint `GET /api/users/[id]/stats`** – zwraca:
+  - liczbę postów użytkownika
+  - datę rejestracji
+  - ostatni post
+- [ ] **Użyj Prisma do agregacji** (`_count`, `orderBy`, `take`).
+- [ ] **Dodaj endpoint `GET /api/posts/popular`** – zwraca posty z największą liczbą komentarzy (jeśli dodasz model `Comment`).
+- [ ] **Opcjonalnie:** Stwórz model `Comment` i powiąż z postami.
+
+### ✅ Dzień 12 – Webhooki i integracje z zewnętrznymi API
+
+**Cel:** Symulować webhook – np. powiadomienie o nowym poście.
+
+- [ ] **Stwórz endpoint `POST /api/webhooks/new-post`** – będzie przyjmował dane z zewnętrznego serwisu (np. gdy inny system doda post).
+- [ ] **Zabezpiecz go** prostym kluczem API w nagłówku (np. `X-Webhook-Secret`).
+- [ ] **Odbierz dane, zapisz w bazie** (lub wyślij notyfikację).
+- [ ] **Przetestuj** za pomocą `curl` lub Insomni.
+
+### ✅ Dzień 13 – Testowanie API (Jest + Supertest)
+
+**Cel:** Napisać podstawowe testy dla route handlerów.
+
+- [ ] **Zainstaluj potrzebne pakiety**: `jest`, `supertest`, `@types/jest`, `ts-jest`.
+- [ ] **Skonfiguruj Jest** dla Next.js (możesz skorzystać z oficjalnego przykładu).
+- [ ] **Napisz testy dla `GET /api/posts`**:
+  - sprawdź status 200
+  - sprawdź, czy zwraca tablicę
+- [ ] **Napisz testy dla `POST /api/posts`**:
+  - z poprawnymi danymi – status 201
+  - z błędnymi danymi – status 400
+  - bez autoryzacji – status 401
+- [ ] **Uruchom testy** i popraw ewentualne błędy.
+
+### ✅ Dzień 14 – Podsumowanie i wdrożenie produkcyjne
+
+**Cel:** Ostateczne szlify, refaktoryzacja i deployment.
+
+- [ ] **Przejrzyj wszystkie route handlery** – czy obsługują błędy, czy mają odpowiednie kody HTTP.
+- [ ] **Dodaj logowanie błędów** (np. do pliku lub usługi zewnętrznej).
+- [ ] **Zadbaj o zmienne środowiskowe** – w `.env.production` ustaw prawdziwe dane bazy, klucze OAuth itp.
+- [ ] **Wdróż na Vercel** (lub inny hosting) – pamiętaj o skonfigurowaniu zmiennych środowiskowych w panelu Vercel.
+- [ ] **Przetestuj działanie w produkcji** – wszystkie endpointy, uwierzytelnianie, baza danych.
+- [ ] **Odpowiedz sobie:** Czy jesteś w stanie samodzielnie zbudować pełną aplikację z backendem w Next.js? Czy rozumiesz każdy fragment kodu?
+
+---
+
+## 🎯 **Czego się nauczyłeś po tych dwóch tygodniach?**
+
+- ✅ Zaawansowane route handlery (CRUD, autoryzacja, walidacja)
+- ✅ Obsługa relacji w bazie danych (Prisma)
+- ✅ Uwierzytelnianie i autoryzacja (NextAuth, role)
+- ✅ Filtrowanie, sortowanie, paginacja
+- ✅ Walidacja danych (Zod)
+- ✅ Webhooki i integracje
+- ✅ Podstawy testowania API
+- ✅ Dobre praktyki (obsługa błędów, struktura projektu, zmienne środowiskowe)
+
+To już solidne podstawy do pracy jako **junior/mid fullstack developer** z naciskiem na backend w Next.js. Jeśli potrzebujesz bardziej szczegółowych wyjaśnień do któregoś dnia – daj znać, chętnie pomogę!
