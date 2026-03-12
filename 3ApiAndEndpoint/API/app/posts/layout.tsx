@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import Link from "next/link";
+import "../globals.css";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,17 +23,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <div>
-          <nav className="flex gap-8 justify-center p-4">
-            <Link href="/">Home</Link>
-            <Link href="/posts/" >Posts</Link>
-            <Link href="/profile">Profile</Link>
-          </nav>
-          {children}
-        </div>
-      </body>
-    </html>
+    <div>
+        <p className="bg-blue-500 px-20 text-white">This is posts layout</p>
+        {children}
+    </div>
   );
 }
